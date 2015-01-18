@@ -2,10 +2,8 @@ package pl.polsl.java.lab4.tomasz.domaracki.JavaBillsCollectionServerModel;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -18,19 +16,33 @@ import java.net.Socket;
  * @version 1.0.0
  */
 public class ConnectionHandler extends Thread{
-
+    /**
+     * Socket connected to server
+     */
     private final Socket socket;
-    
+    /**
+     * Buffer to send data to client
+     */
     private final PrintWriter out;
-    
+    /**
+     * Buffer to get data from client
+     */
     private final BufferedInputStream in;
-    
-    private final InputStream inByte;
-    
+    /**
+     * Variables informing about transmission status
+     */
     private boolean transmission;
-    
+    /**
+     * Stores information about last processed data
+     */
     private String lastDataName;
     
+    /**
+     * The initiating constructor of the class ConnectionHandler
+     * 
+     * @param socket socket from client
+     * @throws IOException 
+     */
     public ConnectionHandler(Socket socket) throws IOException {
         this.socket = socket;
         out = new PrintWriter(
@@ -40,7 +52,6 @@ public class ConnectionHandler extends Thread{
         
         in = new BufferedInputStream(socket.getInputStream());
         
-        inByte = socket.getInputStream();
         transmission = true;
         lastDataName = "";
         start();
@@ -107,11 +118,21 @@ public class ConnectionHandler extends Thread{
         }
     }
     
+    /**
+     * Sends information to client that an error occurred during transmission
+     * and close connection with it
+     */
     private void errorDuringTransmission(){
         out.println("Error during transmission. Can not continue, connection closed.");
         transmission = false;
     }
     
+    /**
+     * Checks if received data is expected one
+     * 
+     * @param dataName received data name
+     * @return data status
+     */
     private boolean checkIfDataOrderIsAppropriate(String dataName){
         switch(dataName){
             case "DATABASE":
@@ -139,6 +160,12 @@ public class ConnectionHandler extends Thread{
         return true;
     }
     
+    /**
+     * Waits for new data in buffer and returns it when it appears
+     * 
+     * @return data from stream
+     * @throws IOException 
+     */
     private byte[] waitForData() throws IOException{
         int size = 0;
         while (size == 0){
@@ -155,6 +182,13 @@ public class ConnectionHandler extends Thread{
         return buffer;
     }
     
+    /**
+     * Saves image file on server
+     * 
+     * @param buffer data from server
+     * @param size size of data
+     * @throws IOException 
+     */
     private void saveImageFile(byte[] buffer, int size) throws IOException{
         String fileName = new String(buffer);
         buffer = waitForData();
@@ -166,6 +200,13 @@ public class ConnectionHandler extends Thread{
         out.println("Image file " + fileName + " saved on server.");
     }
     
+    /**
+     * Saves database file on server
+     * 
+     * @param buffer data from server
+     * @param size size of data
+     * @throws IOException 
+     */
     private void saveDatabaseFile(byte[] buffer, int size) throws IOException{
         FileOutputStream dbFileBackup = new FileOutputStream("dbBackup.billdb");
         dbFileBackup.write(buffer, 0, size);
@@ -174,6 +215,9 @@ public class ConnectionHandler extends Thread{
         out.println("Database file saved on server.");
     }            
     
+    /**
+     * Sends information that everything is saved and close connection with client
+     */
     private void endOfTransmission(){
         out.println("Transmission successful. Connection closed.");
         transmission = false;

@@ -60,3 +60,4 @@ $RECYCLE.BIN/
 *.msp
 /build/
 /nbproject/private/
+/dist/
